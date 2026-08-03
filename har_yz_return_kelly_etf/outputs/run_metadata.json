@@ -1,0 +1,9 @@
+{
+  "start": "2015-01-01",
+  "end": "2026-05-31",
+  "target_vol": 0.15,
+  "fee_bps": 2.0,
+  "min_train": 252,
+  "universe_file": "D:\\Quant\\mulfactor\\har_yz_etf\\etf_universe.csv",
+  "failures": []
+}

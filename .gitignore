@@ -1,0 +1,40 @@
+# Local environments
+.env
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+
+# IDE and OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Large or private data artifacts
+data/
+raw/
+raw_*/
+*.csv.bak
+*.sas7bdat
+*.h5
+*.hdf5
+*.parquet
+*.pkl
+*.pt
+*.pth
+*.mat
+*.zip
+*.rar
+*.7z
+*.ova
+*.mp4
+*.mov
+
+# Credentials and local notebooks
+*.key
+*.pem
+*token*
+*secret*
+*password*
