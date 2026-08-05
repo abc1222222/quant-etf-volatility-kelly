@@ -21,19 +21,27 @@ volatility-targeted ETF positions with simple trend filters.
 
 ## Run
 
-From `D:\Quant\mulfactor`:
+From the repository root:
 
-```powershell
-python .\har_yz_etf\run_har_yz_etf.py --start 2015-01-01 --end 2026-05-31
+```bash
+python har_yz_return_kelly_etf/run_har_yz_etf.py --start 2015-01-01 --end 2026-05-31
+```
+
+Or from inside this folder:
+
+```bash
+cd har_yz_return_kelly_etf && python run_har_yz_etf.py
 ```
 
 To force a fresh download:
 
-```powershell
-python .\har_yz_etf\run_har_yz_etf.py --refresh
+```bash
+python har_yz_return_kelly_etf/run_har_yz_etf.py --refresh
 ```
 
-Main outputs are written to `har_yz_etf\outputs`.
+Main outputs are written to `har_yz_return_kelly_etf/outputs`. See the root
+`README.md` for the full output listing and for the Kelly overlay step
+(`run_return_kelly_overlay.py`).
 
 ## Notes
 

@@ -1,125 +1,186 @@
 # ETF Volatility Forecasting and Kelly Allocation
 
-Two volatility-forecasting modules for ETF trading with Kelly-criterion position sizing:
+Two volatility-forecasting modules for China broad-based ETFs, each paired with a
+walk-forward return regression and Kelly-style position sizing. The HAR-YZ module
+estimates Yang-Zhang volatility and forecasts it with a HAR model; the EGARCH module
+fits an EGARCH(1,1) with periodic refitting and reuses the HAR module's cached price
+data for a like-for-like comparison.
 
-1. **HAR-YZ** �?Yang-Zhang volatility estimation + HAR (Heterogeneous Autoregressive) forecasting
-2. **EGARCH** �?Exponential GARCH(1,1) volatility forecasting with walk-forward refitting
+## Key Features
 
-Both modules share a common Kelly overlay pipeline: walk-forward return regression �?mu/sigma position sizing �?trend filter �?CAPM attribution.
+- **Yang-Zhang volatility + HAR forecast** — 20-day Yang-Zhang estimator, walk-forward
+  HAR regression on daily/weekly/monthly components, volatility-targeted positions.
+- **EGARCH(1,1) forecast** — expanding-window maximum likelihood via
+  `scipy.optimize.minimize` (L-BFGS-B), refit every `--refit-step` trading days.
+- **Kelly overlay** — walk-forward OLS return forecast, long-only position
+  `clip(expected_return / predicted_variance, 0, max_position)`.
+- **Trend filters** — `close_gt_ma20`, `ma5_gt_ma20`, `ret20_gt_0`.
+- **Cost-aware reporting** — one-way turnover fees in bps, annualized return/vol,
+  Sharpe, max drawdown, CAPM alpha/beta, tracking error, information ratio.
+- **Regime split** — bull/bear breakdown using a 200-day moving average.
+- **Reproducibility** — each run writes a `run_metadata.json` snapshot of its settings.
 
-## Strategy Architecture
+## Directory Structure
 
 ```
-ETF OHLCV Data (BaoStock / akshare)
-         �?         �?┌─────────────────────────�?    ┌──────────────────────────�?�? har_yz_return_kelly_etf �?    �? egarch_return_kelly_etf  �?�?                        �?    �?                         �?�? Yang-Zhang Volatility  �?    �? EGARCH(1,1) Volatility   �?�? σ²_YZ = σ²_overnight   �?    �? log(σ²_t) = ω + α|ε|/σ  �?�?   + k·σ²_OC            �?    �?   + γ·ε/σ + β·log(σ²)   �?�?   + (1-k)·σ²_RS        �?    �?                         �?�?                        �?    �? L-BFGS-B + warm start   �?�? HAR Forecast:          �?    �? Refit every 60 days     �?�? σ_t = c + d·σ_d        �?    �?                         �?�?     + w·σ_w + m·σ_m   �?    �?                         �?�? (expanding window OLS) �?    �?                         �?└───────────┬─────────────�?    └────────────┬─────────────�?            �?                               �?            └────────────┬───────────────────�?                         �?              Kelly Overlay Pipeline:
-              ┌──────────────────────────�?              �?Walk-forward return OLS  �?              �?�?μ forecast             �?              �?�?Kelly fraction = μ/σ²  �?              �?�?Long-only cap          �?              �?�?Trend filter (MA rules)�?              �?�?Volatility targeting   �?              └──────────┬───────────────�?                         �?              Performance Attribution:
-              �?CAPM alpha/beta (OLS)
-              �?Bull/bear split (MA200)
-              �?Sharpe, max DD, turnover
-              �?QLIKE volatility eval
+quant-etf-volatility-kelly/
+├── har_yz_return_kelly_etf/
+│   ├── run_har_yz_etf.py                    # Yang-Zhang volatility + HAR forecast + vol-target backtest
+│   ├── run_return_kelly_overlay.py          # Walk-forward return regression + Kelly overlay
+│   ├── etf_universe.csv                     # ETF universe (code, name, benchmark, source_note)
+│   ├── README.md
+│   └── outputs/
+│       ├── strategy_summary.csv
+│       ├── latest_signals.csv
+│       ├── return_kelly_summary.csv
+│       ├── return_kelly_latest.csv
+│       ├── return_kelly_bull_bear_ma200.csv
+│       ├── risk_adjusted_metrics.csv
+│       ├── bull_bear_metrics_ma200.csv
+│       ├── run_metadata.json
+│       └── charts/
+│           ├── sh_510050.png
+│           ├── sh_510300.png
+│           ├── sh_510500.png
+│           └── sh_512100.png
+├── egarch_return_kelly_etf/
+│   ├── run_egarch_return_kelly.py           # EGARCH(1,1) fit + Kelly overlay + HAR comparison
+│   ├── README.md
+│   └── outputs/
+│       ├── egarch_return_kelly_summary.csv
+│       ├── egarch_return_kelly_latest.csv
+│       ├── egarch_return_kelly_bull_bear_ma200.csv
+│       ├── har_yz_vs_egarch_summary.csv
+│       ├── har_yz_vs_egarch_bull_bear_ma200.csv
+│       └── run_metadata.json
+├── requirements.txt
+├── LICENSE
+├── .gitignore
+└── README.md
 ```
-
-## Modules
-
-### HAR-YZ Module (`har_yz_return_kelly_etf/`)
-
-| File | Description |
-|------|-------------|
-| `run_har_yz_etf.py` | Yang-Zhang volatility + HAR forecast + volatility-target backtest |
-| `run_return_kelly_overlay.py` | Walk-forward return regression + Kelly position sizing + trend filter |
-| `etf_universe.csv` | ETF universe with benchmark classification |
-| `outputs/` | Summary CSVs, charts (4 PNG), and JSON config |
-
-### EGARCH Module (`egarch_return_kelly_etf/`)
-
-| File | Description |
-|------|-------------|
-| `run_egarch_return_kelly.py` | EGARCH(1,1) fitting + Kelly overlay + regime analysis |
-| `outputs/` | Summary CSVs and performance attribution |
-
-## Tech Stack
-
-- **Python 3.10+**
-- **Data**: baostock, akshare (ETF OHLCV)
-- **Optimization**: scipy.optimize (L-BFGS-B for EGARCH MLE)
-- **Analysis**: pandas, numpy, matplotlib
-- **Storage**: Parquet for cached market data
 
 ## Installation
 
 ```bash
-git clone https://github.com/wangwang11112222/quant-etf-volatility-kelly.git
-cd quant-etf-volatility-kelly
 pip install -r requirements.txt
 ```
 
+Python 3.10+ is recommended. Market data is downloaded through BaoStock (with an
+optional akshare fallback) and cached as Parquet under
+`har_yz_return_kelly_etf/data/raw/`, which is gitignored.
+
 ## Usage
 
-### HAR-YZ Strategy
+Run each script from the repository root:
 
 ```bash
-cd har_yz_return_kelly_etf
+# 1) Download data and run the HAR-YZ volatility backtest
+python har_yz_return_kelly_etf/run_har_yz_etf.py --start 2015-01-01 --end 2026-05-31
 
-# Download data + run HAR-YZ backtest
-python run_har_yz_etf.py --start 2015-01-01 --end 2026-05-31
+# Force a fresh download
+python har_yz_return_kelly_etf/run_har_yz_etf.py --refresh
 
-# Run Kelly overlay on HAR signals
-python run_return_kelly_overlay.py --risk-free 0.02 --fee-bps 2.0
+# 2) Apply the return regression + Kelly overlay to the HAR-YZ signals
+python har_yz_return_kelly_etf/run_return_kelly_overlay.py --risk-free 0.02 --fee-bps 2.0
+
+# 3) Run the EGARCH counterpart (reuses the HAR module's cached data)
+python egarch_return_kelly_etf/run_egarch_return_kelly.py --refit-step 60 --maxiter 300
 ```
 
-### EGARCH Strategy
+Step 1 must run before steps 2 and 3: the overlay reads the per-ETF `*_signals.csv`
+files written by `run_har_yz_etf.py`, and the EGARCH script reads
+`har_yz_return_kelly_etf/data/raw/` and `har_yz_return_kelly_etf/etf_universe.csv`.
 
-```bash
-cd egarch_return_kelly_etf
+### Command-line options
 
-# Run EGARCH(1,1) backtest (uses HAR module's cached data)
-python run_egarch_return_kelly.py --risk-free 0.02 --refit-step 60 --maxiter 300
-```
+`run_har_yz_etf.py`
 
-## Key Algorithms
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--start` | `2015-01-01` | Download start date |
+| `--end` | `2026-05-31` | Download end date |
+| `--refresh` | off | Re-download ETF data |
+| `--target-vol` | `0.15` | Annual target volatility |
+| `--fee-bps` | `2.0` | One-way turnover cost in bps |
+| `--min-train` | `252` | Minimum HAR training rows |
 
-| Algorithm | Formula | Description |
-|-----------|---------|-------------|
-| Yang-Zhang Volatility | σ²_YZ = σ²_ON + k·σ²_OC + (1-k)·σ²_RS | Overnight + open-close + Rogers-Satchell decomposition |
-| HAR Forecast | σ_t = c + d·σ_d + w·σ_w + m·σ_m | Daily, weekly, monthly heterogeneous components |
-| EGARCH(1,1) | log(σ²_t) = ω + α·\|ε_{t-1}\|/σ + γ·ε/σ + β·log(σ²) | Asymmetric leverage effect |
-| Kelly Criterion | f* = μ / σ² | Optimal fraction for geometric growth |
-| Volatility Targeting | w = σ_target / σ_forecast | Scale position to target annual volatility |
-| CAPM Regression | r_s - r_f = α + β(r_b - r_f) + ε | OLS alpha/beta with excess returns |
+`run_return_kelly_overlay.py`
 
-## Configuration
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--risk-free` | `0.02` | Annual risk-free rate |
+| `--min-train` | `252` | Minimum expanding-window training rows |
+| `--max-position` | `1.0` | Long-only position cap |
+| `--fee-bps` | `2.0` | One-way turnover cost in bps |
+| `--bull-bear-ma` | `200` | MA window for the bull/bear split |
 
-### HAR-YZ (`BacktestConfig`)
+`run_egarch_return_kelly.py`
 
-```python
-BacktestConfig(
-    yz_window=20,     # Yang-Zhang estimation window
-    har_week=5,       # Weekly HAR component (5 days)
-    har_month=22,     # Monthly HAR component (22 days)
-    min_train=252,    # Minimum training period
-    target_vol=0.15,  # Annual target volatility (15%)
-    fee_bps=2.0,      # One-way transaction cost
-)
-```
-
-### EGARCH
-
-```bash
---refit-step 60    # Refit EGARCH every 60 trading days
---maxiter 300      # L-BFGS-B max iterations
---max-position 1.0 # Long-only position cap
-```
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--risk-free` | `0.02` | Annual risk-free rate |
+| `--min-train` | `252` | Minimum training rows |
+| `--refit-step` | `60` | Refit EGARCH every N trading days |
+| `--max-position` | `1.0` | Long-only position cap |
+| `--fee-bps` | `2.0` | One-way turnover cost in bps |
+| `--bull-bear-ma` | `200` | MA window for the bull/bear split |
+| `--maxiter` | `300` | L-BFGS-B maximum iterations |
 
 ## Outputs
 
+Written by `run_har_yz_etf.py` into `har_yz_return_kelly_etf/outputs/`:
+
 | File | Description |
 |------|-------------|
-| `summary.csv` | Per-ETF performance (return, vol, Sharpe, max DD) |
-| `capm_results.csv` | Alpha, beta, R² vs. benchmark |
-| `regime_comparison.csv` | Bull/bear regime performance split |
-| `*.png` | Cumulative return and drawdown charts |
-| `config.json` | Run configuration snapshot |
+| `strategy_summary.csv` | Per-ETF, per-trend-rule backtest metrics |
+| `latest_signals.csv` | Most recent signal row for each ETF |
+| `<code>_signals.csv` | Full per-ETF signal history (one file per ETF) |
+| `<code>_har_params.csv` | Walk-forward HAR coefficients |
+| `charts/<code>.png` | Per-ETF chart |
+| `run_metadata.json` | Run configuration snapshot |
+
+Written by `run_return_kelly_overlay.py` into the same directory:
+
+| File | Description |
+|------|-------------|
+| `return_kelly_summary.csv` | Kelly-overlay performance per ETF and trend rule |
+| `return_kelly_bull_bear_ma200.csv` | Bull/bear split of the overlay results |
+| `return_kelly_latest.csv` | Latest overlay signal per ETF |
+| `<code>_return_kelly_signals.csv` | Enriched per-ETF signal history |
+
+Written by `run_egarch_return_kelly.py` into `egarch_return_kelly_etf/outputs/`:
+
+| File | Description |
+|------|-------------|
+| `egarch_return_kelly_summary.csv` | EGARCH strategy performance per ETF and trend rule |
+| `egarch_return_kelly_bull_bear_ma200.csv` | Bull/bear split |
+| `egarch_return_kelly_latest.csv` | Latest EGARCH signal per ETF |
+| `har_yz_vs_egarch_summary.csv` | HAR-YZ vs. EGARCH side-by-side comparison |
+| `har_yz_vs_egarch_bull_bear_ma200.csv` | HAR-YZ vs. EGARCH by regime |
+| `<code>_egarch_params.csv` | Fitted EGARCH parameters per refit |
+| `run_metadata.json` | Run configuration snapshot |
+
+## Dependencies
+
+From `requirements.txt`: `pandas`, `numpy`, `scipy`, `baostock`, `akshare`,
+`matplotlib`, `pyarrow`.
+
+## Notes
+
+- The committed `outputs/` folders are sample results from earlier runs, kept so the
+  repository is readable without re-running the pipeline. `risk_adjusted_metrics.csv`
+  and `bull_bear_metrics_ma200.csv` come from an earlier iteration of the HAR module
+  and are not regenerated by the current scripts.
+- The `run_metadata.json` files record the absolute paths of the machine that produced
+  them; they are historical artifacts and are overwritten on the next run.
+- The ETF universe is intentionally small and focused on broad-based ETFs. It is not
+  survivorship-bias free. Edit `har_yz_return_kelly_etf/etf_universe.csv` to change
+  the tradable set.
+- Two sibling repositories build on this one:
+  [`quant-etf-correlation-rotation`](../quant-etf-correlation-rotation) and
+  [`quant-etf-cross-sectional-selection`](../quant-etf-cross-sectional-selection).
+- Research code only; nothing here is investment advice.
 
 ## License
 
-MIT
+Released under the [MIT License](LICENSE).
