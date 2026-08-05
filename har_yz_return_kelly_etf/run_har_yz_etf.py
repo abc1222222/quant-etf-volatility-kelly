@@ -137,12 +137,12 @@ def download_one_etf_akshare(code: str, start: str, end: str) -> pd.DataFrame:
 
     rename = {
         "日期": "date",
-        "开盘": "open",
-        "最高": "high",
-        "最低": "low",
+        "开�?: "open",
+        "最�?: "high",
+        "最�?: "low",
         "收盘": "close",
-        "成交量": "volume",
-        "成交额": "amount",
+        "成交�?: "volume",
+        "成交�?: "amount",
     }
     df = raw.rename(columns=rename)
     df["code"] = code

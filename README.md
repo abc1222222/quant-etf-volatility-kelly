@@ -2,48 +2,21 @@
 
 Two volatility-forecasting modules for ETF trading with Kelly-criterion position sizing:
 
-1. **HAR-YZ** — Yang-Zhang volatility estimation + HAR (Heterogeneous Autoregressive) forecasting
-2. **EGARCH** — Exponential GARCH(1,1) volatility forecasting with walk-forward refitting
+1. **HAR-YZ** �?Yang-Zhang volatility estimation + HAR (Heterogeneous Autoregressive) forecasting
+2. **EGARCH** �?Exponential GARCH(1,1) volatility forecasting with walk-forward refitting
 
-Both modules share a common Kelly overlay pipeline: walk-forward return regression → mu/sigma position sizing → trend filter → CAPM attribution.
+Both modules share a common Kelly overlay pipeline: walk-forward return regression �?mu/sigma position sizing �?trend filter �?CAPM attribution.
 
 ## Strategy Architecture
 
 ```
 ETF OHLCV Data (BaoStock / akshare)
-         │
-         ▼
-┌─────────────────────────┐     ┌──────────────────────────┐
-│  har_yz_return_kelly_etf │     │  egarch_return_kelly_etf  │
-│                         │     │                          │
-│  Yang-Zhang Volatility  │     │  EGARCH(1,1) Volatility   │
-│  σ²_YZ = σ²_overnight   │     │  log(σ²_t) = ω + α|ε|/σ  │
-│    + k·σ²_OC            │     │    + γ·ε/σ + β·log(σ²)   │
-│    + (1-k)·σ²_RS        │     │                          │
-│                         │     │  L-BFGS-B + warm start   │
-│  HAR Forecast:          │     │  Refit every 60 days     │
-│  σ_t = c + d·σ_d        │     │                          │
-│      + w·σ_w + m·σ_m   │     │                          │
-│  (expanding window OLS) │     │                          │
-└───────────┬─────────────┘     └────────────┬─────────────┘
-            │                                │
-            └────────────┬───────────────────┘
-                         ▼
-              Kelly Overlay Pipeline:
-              ┌──────────────────────────┐
-              │ Walk-forward return OLS  │
-              │ → μ forecast             │
-              │ → Kelly fraction = μ/σ²  │
-              │ → Long-only cap          │
-              │ → Trend filter (MA rules)│
-              │ → Volatility targeting   │
-              └──────────┬───────────────┘
-                         ▼
-              Performance Attribution:
-              • CAPM alpha/beta (OLS)
-              • Bull/bear split (MA200)
-              • Sharpe, max DD, turnover
-              • QLIKE volatility eval
+         �?         �?┌─────────────────────────�?    ┌──────────────────────────�?�? har_yz_return_kelly_etf �?    �? egarch_return_kelly_etf  �?�?                        �?    �?                         �?�? Yang-Zhang Volatility  �?    �? EGARCH(1,1) Volatility   �?�? σ²_YZ = σ²_overnight   �?    �? log(σ²_t) = ω + α|ε|/σ  �?�?   + k·σ²_OC            �?    �?   + γ·ε/σ + β·log(σ²)   �?�?   + (1-k)·σ²_RS        �?    �?                         �?�?                        �?    �? L-BFGS-B + warm start   �?�? HAR Forecast:          �?    �? Refit every 60 days     �?�? σ_t = c + d·σ_d        �?    �?                         �?�?     + w·σ_w + m·σ_m   �?    �?                         �?�? (expanding window OLS) �?    �?                         �?└───────────┬─────────────�?    └────────────┬─────────────�?            �?                               �?            └────────────┬───────────────────�?                         �?              Kelly Overlay Pipeline:
+              ┌──────────────────────────�?              �?Walk-forward return OLS  �?              �?�?μ forecast             �?              �?�?Kelly fraction = μ/σ²  �?              �?�?Long-only cap          �?              �?�?Trend filter (MA rules)�?              �?�?Volatility targeting   �?              └──────────┬───────────────�?                         �?              Performance Attribution:
+              �?CAPM alpha/beta (OLS)
+              �?Bull/bear split (MA200)
+              �?Sharpe, max DD, turnover
+              �?QLIKE volatility eval
 ```
 
 ## Modules
@@ -75,7 +48,7 @@ ETF OHLCV Data (BaoStock / akshare)
 ## Installation
 
 ```bash
-git clone https://github.com/wangwang11111222/quant-etf-volatility-kelly.git
+git clone https://github.com/wangwang11112222/quant-etf-volatility-kelly.git
 cd quant-etf-volatility-kelly
 pip install -r requirements.txt
 ```

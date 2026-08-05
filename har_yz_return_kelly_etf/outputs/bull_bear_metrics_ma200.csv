@@ -1,4 +1,4 @@
-﻿code,trend,regime,days,period_start,period_end,strategy_ann_return,strategy_ann_vol,strategy_sharpe_rf,strategy_max_drawdown,benchmark_ann_return,active_ann_return,information_ratio,capm_alpha_ann,capm_beta,avg_position
+code,trend,regime,days,period_start,period_end,strategy_ann_return,strategy_ann_vol,strategy_sharpe_rf,strategy_max_drawdown,benchmark_ann_return,active_ann_return,information_ratio,capm_alpha_ann,capm_beta,avg_position
 sh.512100,close_gt_ma20,bear_close_le_ma200,11,2024-09-13,2025-04-09,1.1254711844075782,0.13802464746552187,8.009230269425043,-0.0001325995003923497,-0.06061436431038125,1.1860855487179593,2.0778669912968097,,,0.17077597042072387
 sh.512100,ret20_gt_0,bear_close_le_ma200,11,2024-09-13,2025-04-09,1.1254711844075782,0.13802464746552187,8.009230269425043,-0.0001325995003923497,-0.06061436431038125,1.1860855487179593,2.0778669912968097,,,0.17077597042072387
 sh.512100,ma5_gt_ma20,bear_close_le_ma200,11,2024-09-13,2025-04-09,0.9160582093470815,0.13847628311343432,6.470842437423496,-0.00012381823316343077,-0.06061436431038125,0.9766725736574627,1.7074478014896424,,,0.11050347024236135
